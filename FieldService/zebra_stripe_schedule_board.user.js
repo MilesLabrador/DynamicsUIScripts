@@ -3,7 +3,7 @@
 // @namespace    Violentmonkey Scripts
 // @match        https://*.crm.dynamics.com/*
 // @grant        none
-// @version      1.5
+// @version      1.6
 // @author       Miles Labrador
 // @description  Zebra stripes for the D365 Field Service Schedule Board timeline grid
 // @license MIT
@@ -22,8 +22,18 @@ function applyListStripes(doc) {
 }
 
 function applyMainStripes() {
-  document.querySelectorAll('.ms-DetailsRow').forEach(function(row, i) {
+  var allRows = document.querySelectorAll('.ms-DetailsRow');
+  var resourceRows = Array.from(allRows).filter(function(row) {
+    return row.querySelector('[id^="resource-card-"]') !== null;
+  });
+  resourceRows.forEach(function(row, i) {
     row.style.backgroundColor = i % 2 === 0 ? '#daeaf7' : '#ffffff';
+  });
+  // Reset non-resource rows back to default
+  Array.from(allRows).filter(function(row) {
+    return row.querySelector('[id^="resource-card-"]') === null;
+  }).forEach(function(row) {
+    row.style.backgroundColor = '';
   });
 }
 
