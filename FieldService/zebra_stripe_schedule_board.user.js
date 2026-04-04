@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         D365 Schedule Board Zebra Stripes
 // @namespace    Violentmonkey Scripts
-// @match        https://*.dynamics.com/main.aspx*
+// @match        https://*.crm.dynamics.com/*
 // @grant        none
 // @version      1.4
 // @author       Miles Labrador
@@ -12,11 +12,17 @@
 // ==/UserScript==
 
 var listObserver = null;
-var stripeInterval = null;
+var mainObserver = null;
+var debounceTimer = null;
 
 function applyListStripes(doc) {
-  var rows = doc.querySelectorAll('.ms-GroupHeader');
-  rows.forEach(function(row, i) {
+  doc.querySelectorAll('.ms-GroupHeader').forEach(function(row, i) {
+    row.style.backgroundColor = i % 2 === 0 ? '#daeaf7' : '#ffffff';
+  });
+}
+
+function applyMainStripes() {
+  document.querySelectorAll('.ms-DetailsRow').forEach(function(row, i) {
     row.style.backgroundColor = i % 2 === 0 ? '#daeaf7' : '#ffffff';
   });
 }
@@ -24,13 +30,40 @@ function applyListStripes(doc) {
 function startListObserver(doc) {
   if (listObserver) listObserver.disconnect();
   listObserver = new MutationObserver(function() {
-    applyListStripes(doc);
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(function() {
+      applyListStripes(doc);
+    }, 100);
   });
   listObserver.observe(doc.body, { childList: true, subtree: true });
   applyListStripes(doc);
 }
 
+function startMainObserver() {
+  if (mainObserver) mainObserver.disconnect();
+  mainObserver = new MutationObserver(function() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(function() {
+      applyMainStripes();
+    }, 100);
+  });
+  mainObserver.observe(document.body, { childList: true, subtree: true });
+  applyMainStripes();
+}
+
 function injectStripes() {
+  // Main document ms-DetailsRow (booking view and list view variant)
+  var mainDetailRows = document.querySelectorAll('.ms-DetailsRow').length;
+  if (mainDetailRows > 0) {
+    if (!mainObserver) startMainObserver();
+  } else {
+    if (mainObserver) {
+      mainObserver.disconnect();
+      mainObserver = null;
+    }
+  }
+
+  // Schedule board iframe
   var iframes = document.querySelectorAll('iframe');
   var scheduleBoardFound = false;
 
@@ -76,18 +109,18 @@ function injectStripes() {
     } catch(e) {}
   }
 
-  // If schedule board is gone, clean up list observer
   if (!scheduleBoardFound && listObserver) {
     listObserver.disconnect();
     listObserver = null;
   }
 }
 
-// Watch the main document for navigation changes
-var mainObserver = new MutationObserver(function() {
-  injectStripes();
+// Watch main document for navigation
+var pageObserver = new MutationObserver(function() {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(injectStripes, 100);
 });
-mainObserver.observe(document.body, { childList: true, subtree: true });
+pageObserver.observe(document.body, { childList: true, subtree: true });
 
-// Also run on an interval as a fallback
+// Fallback interval
 setInterval(injectStripes, 2000);
