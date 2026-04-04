@@ -11,26 +11,36 @@
 // @updateURL https://update.greasyfork.org/scripts/572448/D365%20Schedule%20Board%20Zebra%20Stripes.meta.js
 // ==/UserScript==
 
+var listObserver = null;
+var stripeInterval = null;
+
+function applyListStripes(doc) {
+  var rows = doc.querySelectorAll('.ms-GroupHeader');
+  rows.forEach(function(row, i) {
+    row.style.backgroundColor = i % 2 === 0 ? '#daeaf7' : '#ffffff';
+  });
+}
+
+function startListObserver(doc) {
+  if (listObserver) listObserver.disconnect();
+  listObserver = new MutationObserver(function() {
+    applyListStripes(doc);
+  });
+  listObserver.observe(doc.body, { childList: true, subtree: true });
+  applyListStripes(doc);
+}
+
 function injectStripes() {
   var iframes = document.querySelectorAll('iframe');
-  var found = false;
+  var scheduleBoardFound = false;
+
   for (var i = 0; i < iframes.length; i++) {
     try {
       if (iframes[i].src && iframes[i].src.includes('ScheduleBoard')) {
-        found = true;
-        break;
-      }
-    } catch(e) {}
-  }
-  if (!found) return;
-
-  for (var i = 0; i < iframes.length; i++) {
-    try {
-      var doc = iframes[i].contentDocument;
-      var gridRows = doc.querySelectorAll('.b-grid-row').length;
-      var listRows = doc.querySelectorAll('.ms-GroupHeader').length;
-
-      if (gridRows > 0 || listRows > 0) {
+        scheduleBoardFound = true;
+        var doc = iframes[i].contentDocument;
+        var gridRows = doc.querySelectorAll('.b-grid-row').length;
+        var listRows = doc.querySelectorAll('.ms-GroupHeader').length;
 
         // Timeline grid stripes
         if (gridRows > 0 && !doc.getElementById('zebra-style')) {
@@ -59,20 +69,25 @@ function injectStripes() {
         }
 
         // List view stripes
-        if (listRows > 0) {
-          doc.querySelectorAll('.ms-GroupHeader').forEach(function(row, i) {
-            row.style.backgroundColor = i % 2 === 0 ? '#daeaf7' : '#ffffff';
-          });
+        if (listRows > 0 && !listObserver) {
+          startListObserver(doc);
         }
-
       }
     } catch(e) {}
   }
+
+  // If schedule board is gone, clean up list observer
+  if (!scheduleBoardFound && listObserver) {
+    listObserver.disconnect();
+    listObserver = null;
+  }
 }
 
-var attempts = 0;
-var interval = setInterval(function() {
+// Watch the main document for navigation changes
+var mainObserver = new MutationObserver(function() {
   injectStripes();
-  attempts++;
-  if (attempts > 30) clearInterval(interval);
-}, 1000);
+});
+mainObserver.observe(document.body, { childList: true, subtree: true });
+
+// Also run on an interval as a fallback
+setInterval(injectStripes, 2000);
