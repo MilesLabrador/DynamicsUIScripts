@@ -3,7 +3,7 @@
 // @namespace    Violentmonkey Scripts
 // @match        https://*.dynamics.com/main.aspx*
 // @grant        none
-// @version      1.3
+// @version      1.4
 // @author       Miles Labrador
 // @description  Zebra stripes for the D365 Field Service Schedule Board timeline grid
 // @license MIT
