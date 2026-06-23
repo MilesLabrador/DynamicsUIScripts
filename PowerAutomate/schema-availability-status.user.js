@@ -1,14 +1,15 @@
 // ==UserScript==
 // @name         Power Automate – Schema-Stale Error Silencer (Save/Test-Aware)
 // @namespace    https://local.userscripts/pa-schema-silencer
-// @version      1.0.0
+// @version      1.0.1
 // @description  Suppresses the transient "X is no longer present in the operation schema" banner while reconciling. Determines real readiness from the Save/Test command-bar button state (ground truth) plus network activity to the Dataverse/Power Platform hosts (secondary signal) — instead of relying on a single fixed timer.
-// @license MIT
 // @match        https://make.powerautomate.com/*
 // @match        https://make.powerapps.com/*
 // @match        https://*.flow.microsoft.com/*
 // @run-at       document-idle
 // @grant        none
+// @updateURL    https://update.greasyfork.org/scripts/584064/Power%20Automate%20%E2%80%93%20Schema-Stale%20Error%20Silencer%20%28SaveTest-Aware%29.meta.js
+// @downloadURL  https://update.greasyfork.org/scripts/584064/Power%20Automate%20%E2%80%93%20Schema-Stale%20Error%20Silencer%20%28SaveTest-Aware%29.user.js
 // ==/UserScript==
 
 (function () {
